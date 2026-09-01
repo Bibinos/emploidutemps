@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="EDT GEMA1-A">
 <meta name="theme-color" content="#0f1b2d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c1626'/%3E%3Crect x='6' y='9' width='20' height='14' rx='2' fill='none' stroke='%23e8a33d' stroke-width='2'/%3E%3Cline x1='6' y1='15' x2='26' y2='15' stroke='%23e8a33d' stroke-width='2'/%3E%3C/svg%3E">
 <title>EDT · GEMA1-A</title>
 <style>
   :root{
@@ -246,9 +248,8 @@
 const ICS_ID = "GE2FBC1AD26D1282DE0532110A8C0137E";
 const ICS_URL = "https://edt.univ-angers.fr/edt/ics?id=" + ICS_ID;
 const PROXIES = [
-  url => url,
   url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
-  url => "https://corsproxy.io/?url=" + encodeURIComponent(url),
+  url => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(url),
   url => "https://thingproxy.freeboard.io/fetch/" + url
 ];
 const CACHE_KEY = "gema-ics-raw";
