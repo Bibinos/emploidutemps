@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EDT GEMA1-A">
+<meta name="theme-color" content="#0f1b2d">
+<title>EDT · GEMA1-A</title>
+<style>
+  :root{
+    --bg:#0c1626;
+    --panel:#141f33;
+    --panel-2:#182642;
+    --cream:#f2ede1;
+    --muted:#7c8aa3;
+    --line:#233150;
+    --amber:#e8a33d;
+    --amber-dim:rgba(232,163,61,0.14);
+    --red:#c85a4a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--cream);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:40px;
+  }
+  .mono{
+    font-family:ui-monospace,"SF Mono","IBM Plex Mono","Courier New",monospace;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0.02em;
+  }
+
+  header{
+    background:linear-gradient(180deg,#0f1b2d,#0c1626 90%);
+    border-bottom:1px solid var(--line);
+    padding:18px 18px 14px;
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .header-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+  }
+  .header-top h1{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:0.01em;
+  }
+  .header-top h1 span{color:var(--amber);}
+  .clock{
+    font-size:15px;
+    color:var(--muted);
+  }
+  .sync-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  .refresh-btn{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--cream);
+    padding:6px 12px;
+    border-radius:7px;
+    font-size:12.5px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+  }
+  .refresh-btn:active{background:#1f2f52;}
+  .refresh-btn.spinning svg{animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .days{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:14px 18px 4px;
+    scrollbar-width:none;
+  }
+  .days::-webkit-scrollbar{display:none;}
+  .day-pill{
+    flex:0 0 auto;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 12px;
+    text-align:center;
+    cursor:pointer;
+    min-width:52px;
+  }
+  .day-pill .dow{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:lowercase;
+  }
+  .day-pill .num{
+    font-size:17px;
+    font-weight:700;
+    margin-top:2px;
+  }
+  .day-pill .dot{
+    width:4px;height:4px;border-radius:50%;
+    background:var(--amber);
+    margin:4px auto 0;
+    opacity:0;
+  }
+  .day-pill.has-events .dot{opacity:1;}
+  .day-pill.selected{
+    background:var(--amber-dim);
+    border-color:var(--amber);
+  }
+  .day-pill.selected .num{color:var(--amber);}
+  .day-pill.today .dow{color:var(--amber);}
+
+  main{padding:8px 18px 20px;}
+  .day-label{
+    font-size:14px;
+    color:var(--muted);
+    margin:14px 2px 10px;
+  }
+
+  .event{
+    display:flex;
+    gap:14px;
+    padding:14px 4px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .event.current{
+    background:var(--amber-dim);
+    border-radius:8px;
+    padding-left:12px;
+    border-bottom:1px solid transparent;
+  }
+  .event.current::before{
+    content:"";
+    position:absolute;
+    left:0;top:8px;bottom:8px;
+    width:3px;
+    background:var(--amber);
+    border-radius:2px;
+  }
+  .event-time{
+    flex:0 0 62px;
+    font-size:14px;
+    line-height:1.4;
+    color:var(--cream);
+  }
+  .event-time .end{color:var(--muted);}
+  .event-body{flex:1;min-width:0;}
+  .event-title{
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 4px;
+    line-height:1.3;
+  }
+  .event-meta{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .badge{
+    display:inline-block;
+    font-size:11px;
+    color:var(--amber);
+    background:rgba(232,163,61,0.12);
+    border-radius:5px;
+    padding:2px 6px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--muted);
+  }
+  .empty .flap{
+    font-size:15px;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    border:1px dashed var(--line);
+    border-radius:8px;
+    padding:14px;
+    display:inline-block;
+  }
+
+  .status{
+    text-align:center;
+    padding:40px 20px;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .status a{color:var(--amber);}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:11.5px;
+    padding:20px;
+  }
+  footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>EDT <span>GEMA1-A</span></h1>
+    <div class="clock mono" id="clock">--:--</div>
+  </div>
+  <div class="sync-row">
+    <span id="syncLabel">Chargement…</span>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadSchedule(true)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+      Actualiser
+    </button>
+  </div>
+</header>
+
+<div class="days" id="days"></div>
+
+<main id="main">
+  <div class="status">Récupération de l'emploi du temps…</div>
+</main>
+
+<footer>
+  Flux public univ-angers.fr · GEMA1-A · aucune connexion requise
+</footer>
+
+<script>
+const ICS_ID = "GE2FBC1AD26D1282DE0532110A8C0137E";
+const ICS_URL = "https://edt.univ-angers.fr/edt/ics?id=" + ICS_ID;
+const PROXIES = [
+  url => url,
+  url => "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+  url => "https://corsproxy.io/?url=" + encodeURIComponent(url),
+  url => "https://thingproxy.freeboard.io/fetch/" + url
+];
+const CACHE_KEY = "gema-ics-raw";
+const DAYS_AHEAD = 13;
+
+let allEvents = [];
+let selectedDay = startOfDay(new Date());
+
+function startOfDay(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+function unescapeICS(s){
+  return s.replace(/\\n/g,"\n").replace(/\\,/g,",").replace(/\\;/g,";").replace(/\\\\/g,"\\");
+}
+
+function parseICSDate(value){
+  const m = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$/);
+  if(!m){
+    const md = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if(md){ return { date:new Date(+md[1], +md[2]-1, +md[3]), allDay:true }; }
+    return null;
+  }
+  const [, y, mo, d, h, mi, s, z] = m;
+  if(z){
+    return { date: new Date(Date.UTC(+y, +mo-1, +d, +h, +mi, +s)), allDay:false };
+  }
+  return { date: new Date(+y, +mo-1, +d, +h, +mi, +s), allDay:false };
+}
+
+function parseICS(text){
+  const unfolded = text.replace(/\r\n[ \t]/g,"").replace(/\n[ \t]/g,"");
+  const lines = unfolded.split(/\r\n|\n/);
+  const events = [];
+  let cur = null;
+  for(const line of lines){
+    if(line === "BEGIN:VEVENT"){ cur = {}; continue; }
+    if(line === "END:VEVENT"){ if(cur) events.push(cur); cur = null; continue; }
+    if(!cur) continue;
+    const idx = line.indexOf(":");
+    if(idx === -1) continue;
+    const rawKey = line.slice(0, idx);
+    const value = line.slice(idx+1);
+    const key = rawKey.split(";")[0];
+    if(key === "DTSTART") cur.start = parseICSDate(value);
+    else if(key === "DTEND") cur.end = parseICSDate(value);
+    else if(key === "SUMMARY") cur.summary = unescapeICS(value);
+    else if(key === "LOCATION") cur.location = unescapeICS(value);
+    else if(key === "DESCRIPTION") cur.description = unescapeICS(value);
+  }
+  return events
+    .filter(e => e.start && e.end)
+    .map(e => ({
+      start: e.start.date,
+      end: e.end.date,
+      allDay: e.start.allDay,
+      summary: e.summary || "Cours",
+      location: e.location || "",
+      description: (e.description || "").split("\n")[0]
+    }))
+    .sort((a,b) => a.start - b.start);
+}
+
+async function fetchICSText(){
+  let lastErr;
+  for(const wrap of PROXIES){
+    try{
+      const res = await fetch(wrap(ICS_URL), { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const text = await res.text();
+      if(text.includes("BEGIN:VCALENDAR")) return text;
+      throw new Error("Réponse invalide");
+    }catch(err){ lastErr = err; }
+  }
+  throw lastErr || new Error("Échec de récupération");
+}
+
+function fmtTime(d){
+  return d.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+}
+function fmtSyncTime(d){
+  return d.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" }) + " · " +
+         d.toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit" });
+}
+
+function renderDayPills(){
+  const container = document.getElementById("days");
+  container.innerHTML = "";
+  const today = startOfDay(new Date());
+  for(let i=0;i<=DAYS_AHEAD;i++){
+    const d = new Date(today);
+    d.setDate(d.getDate()+i);
+    const hasEvents = allEvents.some(e => sameDay(e.start, d));
+    const pill = document.createElement("div");
+    pill.className = "day-pill" +
+      (sameDay(d, selectedDay) ? " selected" : "") +
+      (sameDay(d, today) ? " today" : "") +
+      (hasEvents ? " has-events" : "");
+    pill.innerHTML = `
+      <div class="dow">${sameDay(d,today) ? "auj." : d.toLocaleDateString("fr-FR",{weekday:"short"})}</div>
+      <div class="num">${d.getDate()}</div>
+      <div class="dot"></div>`;
+    pill.onclick = () => { selectedDay = d; renderDayPills(); renderMain(); };
+    container.appendChild(pill);
+  }
+}
+
+function renderMain(){
+  const main = document.getElementById("main");
+  const now = new Date();
+  const dayEvents = allEvents.filter(e => sameDay(e.start, selectedDay));
+
+  const label = document.createElement("div");
+  const dateStr = selectedDay.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
+  main.innerHTML = `<div class="day-label">${dateStr}</div>`;
+
+  if(dayEvents.length === 0){
+    main.innerHTML += `<div class="empty"><div class="flap">journée libre</div></div>`;
+    return;
+  }
+
+  const list = document.createElement("div");
+  dayEvents.forEach(ev => {
+    const isCurrent = now >= ev.start && now <= ev.end;
+    const row = document.createElement("div");
+    row.className = "event" + (isCurrent ? " current" : "");
+    row.innerHTML = `
+      <div class="event-time mono">
+        ${ev.allDay ? "Journée" : fmtTime(ev.start)}
+        ${ev.allDay ? "" : `<br><span class="end">${fmtTime(ev.end)}</span>`}
+      </div>
+      <div class="event-body">
+        <p class="event-title">${ev.summary}${isCurrent ? '<span class="badge">en cours</span>' : ""}</p>
+        <div class="event-meta">${[ev.location, ev.description].filter(Boolean).join(" · ")}</div>
+      </div>`;
+    list.appendChild(row);
+  });
+  main.appendChild(list);
+}
+
+async function loadSchedule(forceRefresh){
+  const btn = document.getElementById("refreshBtn");
+  const syncLabel = document.getElementById("syncLabel");
+  btn.classList.add("spinning");
+
+  try{
+    const text = await fetchICSText();
+    allEvents = parseICS(text);
+    const now = new Date();
+    syncLabel.textContent = "Actualisé à " + fmtSyncTime(now);
+    try{
+      await window.storage.set(CACHE_KEY, JSON.stringify({ text, ts: now.toISOString() }), false);
+    }catch(e){ /* cache best-effort */ }
+    renderDayPills();
+    renderMain();
+  }catch(err){
+    let cached = null;
+    try{ const r = await window.storage.get(CACHE_KEY, false); cached = r ? JSON.parse(r.value) : null; }
+    catch(e){ cached = null; }
+
+    if(cached){
+      allEvents = parseICS(cached.text);
+      const ts = new Date(cached.ts);
+      syncLabel.textContent = "Hors ligne · dernière version du " + fmtSyncTime(ts);
+      renderDayPills();
+      renderMain();
+    } else {
+      syncLabel.textContent = "Impossible de se connecter";
+      document.getElementById("main").innerHTML = `
+        <div class="status">
+          Le serveur de l'université n'a pas répondu.<br>
+          <a href="${ICS_URL.replace('https://','webcal://')}" target="_blank">Ouvrir le flux original</a>
+        </div>`;
+    }
+  } finally {
+    btn.classList.remove("spinning");
+  }
+}
+
+function tickClock(){
+  document.getElementById("clock").textContent =
+    new Date().toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
+}
+
+tickClock();
+setInterval(tickClock, 30000);
+setInterval(() => renderMain(), 60000);
+setInterval(() => loadSchedule(false), 15 * 60 * 1000);
+loadSchedule(false);
+</script>
+</body>
+</html>
